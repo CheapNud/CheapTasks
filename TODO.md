@@ -1,6 +1,6 @@
 <!--
   TODO.md — CheapTasks project work tracker
-  Last updated: 2026-04-18
+  Last updated: 2026-04-18b
 
   RULES FOR AI AGENTS:
   - Update the "Last updated" date above whenever you modify this file
@@ -36,7 +36,7 @@ _Nothing blocking._
 - [ ] (2026-04-18) Confirm `wud.watch=true` registered in WUD on Megaton (http://192.168.1.12:3000) [plan]
 - [ ] (2026-04-18) Phase 2 (Identity bolt-on) blocked on CheapHelpers fix — make `ExternalUserProvisioner` generic over `TUser : CheapUser` and pull `UserManager<TUser>` / `SignInManager<TUser>` instead of the abstract base [plan]
   - Once 3.4.4 ships, swap `AddIdentity<AppUser, IdentityRole>()` + `AddExternalUserProvisioning<AppUser>()` back into Program.cs
-- [ ] (2026-04-18) Public hostname / reverse proxy entry (e.g. `tasks.cheapludes.be` via NPM on HIDDEN-VALLEY) [plan]
+- [ ] (2026-04-18) Add Pi-hole local-DNS override for `tasks.cheapludes.be` → `192.168.1.10` (NPM) for LAN split-horizon [user]
 
 ## Future
 
@@ -73,3 +73,5 @@ _Nothing blocking._
 - [x] (2026-04-18 → 2026-04-18) Tag `v0.1.0` and `v0.1.1` (port 5030 conflict with cheapclerk → bumped to 5040; SQLite snapshot vs Postgres pending changes → regen migration against Postgres) [plan]
 - [x] (2026-04-18 → 2026-04-18) Live at `http://192.168.1.12:5040` — `/login` 200, `/tasks` 302, `Tasks` table + `__EFMigrationsHistory` row in Postgres [plan]
 - [x] (2026-04-18 → 2026-04-18) Append CheapTasks section to tranquility `CREDENTIALS.local.md` [plan]
+- [x] (2026-04-18 → 2026-04-18) Fix Plex auth href paths in Login/MainLayout (`/auth/plex-start`, `/auth/logout` — defaults use hyphens) [bug]
+- [x] (2026-04-18 → 2026-04-18) Add `UseForwardedHeaders` for reverse proxy (`tasks.cheapludes.be` via NPM) — Plex callback now resolves to public HTTPS URL, cookie `Secure` flag set correctly [user]
