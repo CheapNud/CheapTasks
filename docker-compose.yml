@@ -15,7 +15,7 @@ services:
     volumes:
       - dataprotection:/root/.aspnet/DataProtection-Keys
     ports:
-      - "5030:5000"
+      - "5040:5000"
 
 volumes:
   dataprotection:

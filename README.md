@@ -52,5 +52,5 @@ No SSH, no manual step. Same pattern as CheapNights / CheapManga.
 - **Primary git**: Gitea (Sierra-Madre, `192.168.1.15:3000`)
 - **Mirror**: GitHub (CheapNud)
 - **Image registry**: GHCR (`ghcr.io/cheapnud/cheaptasks`)
-- **Runtime**: Megaton VM (`/opt/blazor-apps/cheaptasks/`, port `5030:5000`)
+- **Runtime**: Megaton VM (`/opt/blazor-apps/cheaptasks/`, port `5040:5000`)
 - **Database**: VAULT-TEC PostgreSQL (`192.168.1.14:5432`, db `cheaptasks`)

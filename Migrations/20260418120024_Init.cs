@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,15 +16,15 @@ namespace CheapTasks.Migrations
                 name: "Tasks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    Done = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    DueUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CompletedUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Done = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DueUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CompletedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
