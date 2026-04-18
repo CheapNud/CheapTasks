@@ -1,6 +1,6 @@
 <!--
   TODO.md — CheapTasks project work tracker
-  Last updated: 2026-04-18b
+  Last updated: 2026-04-18c
 
   RULES FOR AI AGENTS:
   - Update the "Last updated" date above whenever you modify this file
@@ -36,7 +36,6 @@ _Nothing blocking._
 - [ ] (2026-04-18) Confirm `wud.watch=true` registered in WUD on Megaton (http://192.168.1.12:3000) [plan]
 - [ ] (2026-04-18) Phase 2 (Identity bolt-on) blocked on CheapHelpers fix — make `ExternalUserProvisioner` generic over `TUser : CheapUser` and pull `UserManager<TUser>` / `SignInManager<TUser>` instead of the abstract base [plan]
   - Once 3.4.4 ships, swap `AddIdentity<AppUser, IdentityRole>()` + `AddExternalUserProvisioning<AppUser>()` back into Program.cs
-- [ ] (2026-04-18) Add Pi-hole local-DNS override for `tasks.cheapludes.be` → `192.168.1.10` (NPM) for LAN split-horizon [user]
 
 ## Future
 
