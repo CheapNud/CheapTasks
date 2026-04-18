@@ -1,0 +1,146 @@
+@page "/"
+@page "/tasks"
+@attribute [Authorize]
+@inject TaskRepo TaskRepo
+@inject ISnackbar Snackbar
+
+<PageTitle>CheapTasks</PageTitle>
+
+<MudPaper Class="pa-4 mb-4" Elevation="0">
+    <MudText Typo="Typo.h5" GutterBottom="true">My tasks</MudText>
+
+    <div class="d-flex gap-2 align-end">
+        <MudTextField @bind-Value="_newTitle"
+                      Label="What needs doing?"
+                      Variant="Variant.Outlined"
+                      OnKeyDown="OnNewTitleKey"
+                      Immediate="true"
+                      Disabled="_busy" />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="AddTask"
+                   Disabled="_busy || string.IsNullOrWhiteSpace(_newTitle)">
+            Add
+        </MudButton>
+    </div>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_tasks.Count == 0)
+{
+    <MudPaper Class="pa-8 d-flex flex-column align-center" Elevation="0">
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">Nothing on your list. Add something above.</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudList T="TaskItem" Dense="true">
+        @foreach (var task in _tasks)
+        {
+            <MudListItem T="TaskItem" Value="task">
+                <div class="d-flex align-center gap-2 w-100">
+                    <MudCheckBox T="bool"
+                                 Value="task.Done"
+                                 ValueChanged="@(done => ToggleDone(task, done))"
+                                 Color="Color.Primary" />
+                    <div class="flex-grow-1">
+                        <MudText Typo="Typo.body1"
+                                 Style="@(task.Done ? "text-decoration: line-through; opacity: 0.55;" : "")">
+                            @task.Title
+                        </MudText>
+                        @if (!string.IsNullOrWhiteSpace(task.Notes))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@task.Notes</MudText>
+                        }
+                        @if (task.DueUtc.HasValue)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                Due @task.DueUtc.Value.ToLocalTime().ToString("g")
+                            </MudText>
+                        }
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="@(() => DeleteTask(task))" />
+                </div>
+            </MudListItem>
+        }
+    </MudList>
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    private List<TaskItem> _tasks = [];
+    private string _newTitle = string.Empty;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _ownerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is null) return;
+        var state = await AuthState;
+        _ownerId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        if (_ownerId is null) return;
+        _loading = true;
+        _tasks = await TaskRepo.GetForOwnerAsync(_ownerId);
+        _loading = false;
+    }
+
+    private async Task OnNewTitleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_newTitle))
+            await AddTask();
+    }
+
+    private async Task AddTask()
+    {
+        if (_ownerId is null || string.IsNullOrWhiteSpace(_newTitle)) return;
+
+        _busy = true;
+        try
+        {
+            var task = new TaskItem
+            {
+                OwnerId = _ownerId,
+                Title = _newTitle.Trim(),
+            };
+            await TaskRepo.AddAsync(task);
+            _newTitle = string.Empty;
+            await Reload();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToggleDone(TaskItem task, bool done)
+    {
+        if (_ownerId is null) return;
+        await TaskRepo.SetDoneAsync(task.Id, _ownerId, done);
+        await Reload();
+    }
+
+    private async Task DeleteTask(TaskItem task)
+    {
+        if (_ownerId is null) return;
+        await TaskRepo.DeleteAsync(task.Id, _ownerId);
+        Snackbar.Add($"Deleted \"{task.Title}\"", Severity.Info);
+        await Reload();
+    }
+}

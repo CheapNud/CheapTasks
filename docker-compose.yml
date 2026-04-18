@@ -1,0 +1,22 @@
+services:
+  cheaptasks:
+    image: ghcr.io/cheapnud/cheaptasks:latest
+    container_name: cheaptasks
+    restart: unless-stopped
+    labels:
+      - wud.watch=true
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__Default=Host=192.168.1.14;Port=5432;Database=cheaptasks;Username=cheaptasks;Password=${PG_PASSWORD}
+      - Plex__AdminToken=${PLEX_ADMIN_TOKEN}
+      - Plex__CallbackBaseUrl=${PLEX_CALLBACK_BASE_URL}
+      - Serilog__WriteTo__0__Name=Seq
+      - Serilog__WriteTo__0__Args__serverUrl=http://192.168.1.15:5341
+    volumes:
+      - dataprotection:/root/.aspnet/DataProtection-Keys
+    ports:
+      - "5030:5000"
+
+volumes:
+  dataprotection:

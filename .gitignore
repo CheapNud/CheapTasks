@@ -416,3 +416,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# CheapTasks
+*.db
+*.db-shm
+*.db-wal
+.claude/
+.env
+.env.*

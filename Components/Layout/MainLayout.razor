@@ -1,0 +1,33 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Dense="true">
+        <MudIcon Icon="@Icons.Material.Filled.TaskAlt" Class="me-2" />
+        <MudText Typo="Typo.h6">CheapTasks</MudText>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                    @context.User.Identity?.Name
+                </MudChip>
+                <MudButton Href="/auth/plex/logout"
+                           Variant="Variant.Text"
+                           Size="Size.Small"
+                           Color="Color.Default"
+                           Style="text-transform:none;">
+                    Logout
+                </MudButton>
+            </Authorized>
+        </AuthorizeView>
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

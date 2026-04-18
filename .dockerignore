@@ -1,0 +1,16 @@
+**/.git
+**/.github
+**/.gitea
+**/.vs
+**/.vscode
+**/.claude
+**/bin
+**/obj
+**/*.md
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/docker-compose.yml
+**/.env
+**/.env.*
+LICENSE

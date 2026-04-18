@@ -1,0 +1,46 @@
+@page "/login"
+@layout EmptyLayout
+@attribute [AllowAnonymous]
+
+<PageTitle>Sign in — CheapTasks</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
+    <MudPaper Class="pa-8 d-flex flex-column align-center" Elevation="2">
+        <MudText Typo="Typo.h4" GutterBottom="true">CheapTasks</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6 text-center">
+            Just another tasks/todo app.
+        </MudText>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4" Variant="Variant.Filled" Dense="true">
+                @_error
+            </MudAlert>
+        }
+
+        <MudButton Href="/auth/plex/start"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Size="Size.Large"
+                   FullWidth="true"
+                   StartIcon="@Icons.Material.Filled.Login">
+            Sign in with Plex
+        </MudButton>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-6 text-center">
+            Access is limited to members of the Plex server.
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? Error { get; set; }
+
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        _error = Error;
+    }
+}

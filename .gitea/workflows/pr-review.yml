@@ -1,0 +1,232 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+env:
+  CLAUDE_MODEL: "claude-opus-4-6"
+  MAX_TOKENS: 4096
+  MAX_DIFF_SIZE_BYTES: 100000
+  GITEA_URL: "http://192.168.1.15:3000"
+
+jobs:
+  claude-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get PR details and diff
+        id: pr-info
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          REPO=${{ github.repository }}
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+          if ! curl -sf \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Content-Type: application/json" \
+            "${{ env.GITEA_URL }}/api/v1/repos/${REPO}/pulls/${PR_NUMBER}" \
+            > pr-details.json; then
+            echo "::error::Failed to fetch PR details from Gitea API"
+            exit 1
+          fi
+
+          if ! curl -sf \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Accept: text/plain" \
+            "${{ env.GITEA_URL }}/api/v1/repos/${REPO}/pulls/${PR_NUMBER}.diff" \
+            > pr-diff.txt; then
+            echo "::error::Failed to fetch PR diff from Gitea API"
+            exit 1
+          fi
+
+      - name: Validate diff size
+        id: validate
+        run: |
+          set -e
+
+          DIFF_SIZE=$(wc -c < pr-diff.txt)
+          echo "Diff size: $DIFF_SIZE bytes"
+
+          if [ $DIFF_SIZE -gt ${{ env.MAX_DIFF_SIZE_BYTES }} ]; then
+            echo "::error::Diff too large for AI review ($DIFF_SIZE bytes, max ${{ env.MAX_DIFF_SIZE_BYTES }})"
+            exit 1
+          fi
+
+          if [ $DIFF_SIZE -eq 0 ]; then
+            echo "SKIP=true" >> $GITHUB_OUTPUT
+          else
+            echo "SKIP=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Review with Claude
+        if: steps.validate.outputs.SKIP != 'true'
+        id: claude-review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -e
+
+          PR_TITLE=$(jq -r '.title' pr-details.json)
+          PR_BODY=$(jq -r '.body // "No description provided"' pr-details.json)
+          ADDITIONS=$(jq -r '.additions // 0' pr-details.json)
+          DELETIONS=$(jq -r '.deletions // 0' pr-details.json)
+          CHANGED_FILES=$(jq -r '.changed_files // 0' pr-details.json)
+
+          PROMPT="You are an expert code reviewer for C#, .NET, Blazor, and ASP.NET Core projects.
+
+          Review this pull request. Be extremely concise - only flag things that actually matter.
+
+          Format your review as:
+          1. **Summary** (1-2 sentences max)
+          2. **Code Quality** followed by a 1-5 star rating using filled ⭐ and empty ☆ (e.g. ⭐⭐⭐⭐☆). Below the rating, add one short sentence highlighting a strength or positive aspect of the PR.
+          3. **Issues** (only bugs, security problems, deadlocks, resource leaks, or breaking changes - skip this section entirely if none found). Prefix each issue with a severity orb: 🔴 Critical, 🟡 Warning, 🟢 Minor.
+          4. **Verdict**: One of these three:
+             - **APPROVE** — code is good to merge
+             - **REQUEST CHANGES** — fix issues before merging. List specific changes as a short bullet list.
+             - **REJECT** — fundamental or critical problems require a rethink
+
+          Project-specific rules to enforce:
+          - Primary constructors preferred over traditional constructors for DI
+          - Lambda LINQ only — never query syntax
+          - Debug.WriteLine() not Console.WriteLine()
+          - Add() not AddAsync() for EF Core
+          - SaveChangesAsync() must not be inside loops
+          - IDbContextFactory pattern required in Blazor Server
+          - No async void
+          - No Task.FromResult
+          - MudBlazor components preferred over raw HTML
+
+          General rules:
+          - Do NOT comment on style, naming, or minor preferences
+          - Do NOT suggest nice-to-have improvements or refactors
+          - NEVER repeat secrets, passwords, API keys, tokens, or internal URLs/IPs found in the diff
+          - If the diff introduces hardcoded credentials, flag as critical but do NOT quote actual values
+
+          ---
+
+          **PR Title**: ${PR_TITLE}
+
+          **Description**: ${PR_BODY}
+
+          **Stats**: +${ADDITIONS} / -${DELETIONS} lines across ${CHANGED_FILES} files
+
+          **Diff**:
+          \`\`\`diff
+          $(cat pr-diff.txt)
+          \`\`\`"
+
+          jq -n \
+            --arg model "${{ env.CLAUDE_MODEL }}" \
+            --argjson max_tokens ${{ env.MAX_TOKENS }} \
+            --arg prompt "$PROMPT" \
+            '{
+              model: $model,
+              max_tokens: $max_tokens,
+              messages: [{ role: "user", content: $prompt }]
+            }' > review-request.json
+
+          if ! RESPONSE=$(curl -s --max-time 60 https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d @review-request.json); then
+            echo "::error::Failed to call Claude API"
+            exit 1
+          fi
+
+          ERROR=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+          if [ -n "$ERROR" ]; then
+            echo "::error::Claude API Error: $ERROR"
+            exit 1
+          fi
+
+          REVIEW=$(echo "$RESPONSE" | jq -r '.content[0].text // empty')
+          if [ -z "$REVIEW" ]; then
+            echo "::error::No review content received from Claude"
+            exit 1
+          fi
+
+          INPUT_TOKENS=$(echo "$RESPONSE" | jq -r '.usage.input_tokens // 0')
+          OUTPUT_TOKENS=$(echo "$RESPONSE" | jq -r '.usage.output_tokens // 0')
+          COST=$(awk "BEGIN {printf \"%.4f\", ($INPUT_TOKENS * 15 + $OUTPUT_TOKENS * 75) / 1000000}")
+
+          echo "$REVIEW" > claude-review.md
+          echo "INPUT_TOKENS=$INPUT_TOKENS" >> $GITHUB_OUTPUT
+          echo "OUTPUT_TOKENS=$OUTPUT_TOKENS" >> $GITHUB_OUTPUT
+          echo "COST=$COST" >> $GITHUB_OUTPUT
+
+      - name: Find existing review comment
+        if: steps.validate.outputs.SKIP != 'true'
+        id: find-comment
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+
+          PR_NUMBER=${{ steps.pr-info.outputs.PR_NUMBER }}
+          REPO=${{ github.repository }}
+
+          COMMENT_ID=$(curl -sf \
+            -H "Authorization: token $GITEA_TOKEN" \
+            "${{ env.GITEA_URL }}/api/v1/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            | jq -r '.[] | select(.user.login == "gitea-actions" or (.body | contains("🤖 Claude AI Code Review"))) | .id' \
+            | head -n 1 || echo "")
+
+          if [ -n "$COMMENT_ID" ]; then
+            echo "COMMENT_ID=$COMMENT_ID" >> $GITHUB_OUTPUT
+            echo "UPDATE_MODE=edit" >> $GITHUB_OUTPUT
+          else
+            echo "UPDATE_MODE=create" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post or update review comment
+        if: steps.validate.outputs.SKIP != 'true'
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+
+          PR_NUMBER=${{ steps.pr-info.outputs.PR_NUMBER }}
+          REPO=${{ github.repository }}
+          COMMENT_ID=${{ steps.find-comment.outputs.COMMENT_ID }}
+          UPDATE_MODE=${{ steps.find-comment.outputs.UPDATE_MODE }}
+          INPUT_TOKENS=${{ steps.claude-review.outputs.INPUT_TOKENS }}
+          OUTPUT_TOKENS=${{ steps.claude-review.outputs.OUTPUT_TOKENS }}
+          COST=${{ steps.claude-review.outputs.COST }}
+
+          FOOTER="---
+          📊 **Tokens**: ${INPUT_TOKENS} input + ${OUTPUT_TOKENS} output | 💰 **Cost**: ~\$${COST}
+          *Generated by Claude Opus 4.6 via Gitea Actions*"
+
+          jq -n --rawfile review claude-review.md --arg footer "$FOOTER" \
+            '{"body": ("## 🤖 Claude AI Code Review\n\n" + $review + "\n\n" + $footer)}' \
+            > comment-payload.json
+
+          if [ "$UPDATE_MODE" = "edit" ]; then
+            curl -sf -X PATCH \
+              -H "Authorization: token $GITEA_TOKEN" \
+              -H "Content-Type: application/json" \
+              "${{ env.GITEA_URL }}/api/v1/repos/${REPO}/issues/comments/${COMMENT_ID}" \
+              -d @comment-payload.json
+          else
+            curl -sf -X POST \
+              -H "Authorization: token $GITEA_TOKEN" \
+              -H "Content-Type: application/json" \
+              "${{ env.GITEA_URL }}/api/v1/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              -d @comment-payload.json
+          fi
