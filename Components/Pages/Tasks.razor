@@ -3,6 +3,7 @@
 @attribute [Authorize]
 @inject TaskRepo TaskRepo
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>CheapTasks</PageTitle>
 
@@ -108,10 +109,18 @@
                         </MudChip>
                     }
 
-                    <MudIconButton Icon="@Icons.Material.Outlined.Delete"
-                                   Size="Size.Small"
-                                   Style="color: var(--mud-palette-text-disabled);"
-                                   OnClick="@(() => DeleteTask(task))" />
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                       Size="Size.Small"
+                                       Style="color: var(--mud-palette-text-disabled);"
+                                       OnClick="@(() => EditTask(task))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                       Size="Size.Small"
+                                       Style="color: var(--mud-palette-text-disabled);"
+                                       OnClick="@(() => DeleteTask(task))" />
+                    </MudTooltip>
                 </div>
             }
         </MudPaper>
@@ -231,5 +240,28 @@
         await TaskRepo.DeleteAsync(task.Id, _ownerId);
         Snackbar.Add($"Deleted \"{task.Title}\"", Severity.Info);
         _tasks.Remove(task);
+    }
+
+    private async Task EditTask(TaskItem task)
+    {
+        var parameters = new DialogParameters<EditTaskDialog>
+        {
+            { x => x.Task, task }
+        };
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            BackdropClick = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<EditTaskDialog>("Edit task", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            // Task object was mutated in-place by the dialog; nothing to refetch.
+            StateHasChanged();
+        }
     }
 }

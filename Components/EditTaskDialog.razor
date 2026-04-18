@@ -1,0 +1,85 @@
+@inject TaskRepo TaskRepo
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Rounded.Edit" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Edit task</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2" Style="min-width: 320px;">
+            <MudTextField @bind-Value="_title"
+                          Label="Title"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          Immediate="true"
+                          MaxLength="200"
+                          AutoFocus="true" />
+            <MudTextField @bind-Value="_notes"
+                          Label="Notes"
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          MaxLength="2000"
+                          HelperText="Optional details" />
+            <MudDatePicker @bind-Date="_dueDate"
+                           Label="Due date"
+                           Variant="Variant.Outlined"
+                           Clearable="true"
+                           HelperText="Optional" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save"
+                   Disabled="@(_busy || string.IsNullOrWhiteSpace(_title))">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public TaskItem Task { get; set; } = default!;
+
+    private string _title = string.Empty;
+    private string? _notes;
+    private DateTime? _dueDate;
+    private bool _busy;
+
+    protected override void OnInitialized()
+    {
+        _title = Task.Title;
+        _notes = Task.Notes;
+        _dueDate = Task.DueUtc?.ToLocalTime();
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_title)) return;
+
+        _busy = true;
+        try
+        {
+            Task.Title = _title.Trim();
+            Task.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
+            Task.DueUtc = _dueDate.HasValue
+                ? DateTime.SpecifyKind(_dueDate.Value, DateTimeKind.Local).ToUniversalTime()
+                : null;
+
+            await TaskRepo.UpdateAsync(Task);
+            MudDialog.Close(DialogResult.Ok(Task));
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
