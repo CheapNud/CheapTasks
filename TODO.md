@@ -1,6 +1,6 @@
 <!--
   TODO.md — CheapTasks project work tracker
-  Last updated: 2026-04-17b
+  Last updated: 2026-04-18
 
   RULES FOR AI AGENTS:
   - Update the "Last updated" date above whenever you modify this file
@@ -32,12 +32,11 @@ _Nothing blocking._
 
 ## Planned
 
-- [ ] (2026-04-17) Smoke-test locally — `dotnet run`, sign in with Plex, add/complete/delete tasks [plan]
-- [ ] (2026-04-17) Provision `cheaptasks` Postgres user + db on VAULT-TEC [plan]
-  - Connection: `Host=192.168.1.14;Port=5432;Database=cheaptasks;Username=cheaptasks;Password=<secret>`
-- [ ] (2026-04-17) Megaton: drop `docker-compose.yml` to `/opt/blazor-apps/cheaptasks/`, set `PG_PASSWORD`, `PLEX_ADMIN_TOKEN`, `PLEX_CALLBACK_BASE_URL` in `.env`, push v0.1.0 tag [plan]
-- [ ] (2026-04-17) Confirm `wud.watch=true` is picked up by WUD on Megaton (check http://192.168.1.12:3000) [plan]
-- [ ] (2026-04-17) Phase 2 trigger: drop in `Register.razor` from `CheapHelpers.Blazor.Pages.Account` when ready to open password sign-up [plan]
+- [ ] (2026-04-18) End-to-end sign-in test against live deployment (Plex pin → callback → land on /tasks) [user]
+- [ ] (2026-04-18) Confirm `wud.watch=true` registered in WUD on Megaton (http://192.168.1.12:3000) [plan]
+- [ ] (2026-04-18) Phase 2 (Identity bolt-on) blocked on CheapHelpers fix — make `ExternalUserProvisioner` generic over `TUser : CheapUser` and pull `UserManager<TUser>` / `SignInManager<TUser>` instead of the abstract base [plan]
+  - Once 3.4.4 ships, swap `AddIdentity<AppUser, IdentityRole>()` + `AddExternalUserProvisioning<AppUser>()` back into Program.cs
+- [ ] (2026-04-18) Public hostname / reverse proxy entry (e.g. `tasks.cheapludes.be` via NPM on HIDDEN-VALLEY) [plan]
 
 ## Future
 
@@ -68,3 +67,9 @@ _Nothing blocking._
 - [x] (2026-04-17 → 2026-04-17) Rate limiter on `auth` endpoint (10/min per IP) [plan]
 - [x] (2026-04-17 → 2026-04-17) Login.razor (Plex button, EmptyLayout) + Tasks.razor (`[Authorize]`, add/complete/delete) [plan]
 - [x] (2026-04-17 → 2026-04-17) `AuthorizeRouteView` + `RedirectToLogin` for anonymous-redirect [plan]
+- [x] (2026-04-18 → 2026-04-18) Pivot: drop Identity from Program.cs (CheapHelpers `ExternalUserProvisioner` hard-typed to `UserManager<CheapUser>` — incompatible with `AddIdentity<AppUser>`). Mirror CheapNights bare-cookie pattern. [bug]
+- [x] (2026-04-18 → 2026-04-18) Provision `cheaptasks` PG user + db on VAULT-TEC (`cheaptasks-vault-boy-2026`) [plan]
+- [x] (2026-04-18 → 2026-04-18) Drop `docker-compose.yml` + `.env` to Megaton `/opt/blazor-apps/cheaptasks/` [plan]
+- [x] (2026-04-18 → 2026-04-18) Tag `v0.1.0` and `v0.1.1` (port 5030 conflict with cheapclerk → bumped to 5040; SQLite snapshot vs Postgres pending changes → regen migration against Postgres) [plan]
+- [x] (2026-04-18 → 2026-04-18) Live at `http://192.168.1.12:5040` — `/login` 200, `/tasks` 302, `Tasks` table + `__EFMigrationsHistory` row in Postgres [plan]
+- [x] (2026-04-18 → 2026-04-18) Append CheapTasks section to tranquility `CREDENTIALS.local.md` [plan]
