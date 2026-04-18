@@ -5,6 +5,7 @@ using CheapTasks.Components;
 using CheapTasks.Data;
 using CheapTasks.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -17,6 +18,19 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
     .ReadFrom.Configuration(ctx.Configuration)
     .WriteTo.Console()
     .Enrich.WithProperty("Application", "CheapTasks"));
+
+// ─── Reverse proxy (NPM at HIDDEN-VALLEY → tasks.cheapludes.be) ───────
+// Trust X-Forwarded-* so Request.Scheme=https and Request.Host=public hostname.
+// Plex callback auto-detection and cookie Secure flag both depend on this.
+builder.Services.Configure<ForwardedHeadersOptions>(opts =>
+{
+    opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                          | ForwardedHeaders.XForwardedProto
+                          | ForwardedHeaders.XForwardedHost;
+    // LAN-only proxy chain — clear defaults so any private-network proxy is trusted.
+    opts.KnownIPNetworks.Clear();
+    opts.KnownProxies.Clear();
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(opt => opt.DetailedErrors = builder.Environment.IsDevelopment());
@@ -107,6 +121,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
 
+app.UseForwardedHeaders();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
