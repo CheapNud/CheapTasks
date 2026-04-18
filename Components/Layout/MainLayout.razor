@@ -6,27 +6,32 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="0" Dense="true">
-        <MudIcon Icon="@Icons.Material.Filled.TaskAlt" Class="me-2" />
+    <MudAppBar Elevation="1" Dense="true" Color="Color.Surface">
+        <MudIcon Icon="@Icons.Material.Rounded.TaskAlt"
+                 Color="Color.Primary"
+                 Class="me-2" />
         <MudText Typo="Typo.h6">CheapTasks</MudText>
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Text"
+                         Color="Color.Default"
+                         Icon="@Icons.Material.Rounded.Person">
                     @context.User.Identity?.Name
                 </MudChip>
-                <MudButton Href="/auth/logout"
-                           Variant="Variant.Text"
-                           Size="Size.Small"
-                           Color="Color.Default"
-                           Style="text-transform:none;">
-                    Logout
-                </MudButton>
+                <MudTooltip Text="Sign out">
+                    <MudIconButton Href="/auth/logout"
+                                   Icon="@Icons.Material.Rounded.Logout"
+                                   Size="Size.Small"
+                                   Color="Color.Default" />
+                </MudTooltip>
             </Authorized>
         </AuthorizeView>
     </MudAppBar>
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
             @Body
         </MudContainer>
     </MudMainContent>

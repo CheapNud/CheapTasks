@@ -6,90 +6,174 @@
 
 <PageTitle>CheapTasks</PageTitle>
 
-<MudPaper Class="pa-4 mb-4" Elevation="0">
-    <MudText Typo="Typo.h5" GutterBottom="true">My tasks</MudText>
+<MudStack Spacing="4">
 
-    <div class="d-flex gap-2 align-end">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.h4">My tasks</MudText>
+        @if (_tasks.Count > 0)
+        {
+            <MudStack Row="true" Spacing="1">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                    @ActiveCount active
+                </MudChip>
+                @if (DoneCount > 0)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                        @DoneCount done
+                    </MudChip>
+                }
+            </MudStack>
+        }
+    </MudStack>
+
+    <MudPaper Elevation="2" Class="pa-1">
         <MudTextField @bind-Value="_newTitle"
-                      Label="What needs doing?"
-                      Variant="Variant.Outlined"
+                      Placeholder="What needs doing?"
+                      Variant="Variant.Text"
+                      Margin="Margin.Dense"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Rounded.AddCircle"
+                      AdornmentColor="@AddIconColor"
+                      OnAdornmentClick="AddTask"
                       OnKeyDown="OnNewTitleKey"
                       Immediate="true"
-                      Disabled="_busy" />
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="AddTask"
-                   Disabled="_busy || string.IsNullOrWhiteSpace(_newTitle)">
-            Add
-        </MudButton>
-    </div>
-</MudPaper>
-
-@if (_loading)
-{
-    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-}
-else if (_tasks.Count == 0)
-{
-    <MudPaper Class="pa-8 d-flex flex-column align-center" Elevation="0">
-        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large" Color="Color.Secondary" />
-        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">Nothing on your list. Add something above.</MudText>
+                      Disabled="_busy"
+                      Class="px-3" />
     </MudPaper>
-}
-else
-{
-    <MudList T="TaskItem" Dense="true">
-        @foreach (var task in _tasks)
-        {
-            <MudListItem T="TaskItem" Value="task">
-                <div class="d-flex align-center gap-2 w-100">
-                    <MudCheckBox T="bool"
-                                 Value="task.Done"
+
+    @if (_tasks.Count > 0)
+    {
+        <MudTabs ActivePanelIndex="@_filterIndex"
+                 ActivePanelIndexChanged="OnFilterChange"
+                 Color="Color.Primary"
+                 Rounded="true"
+                 Border="false"
+                 Outlined="false">
+            <MudTabPanel Text="@($"Active ({ActiveCount})")" />
+            <MudTabPanel Text="@($"Done ({DoneCount})")" />
+            <MudTabPanel Text="@($"All ({_tasks.Count})")" />
+        </MudTabs>
+    }
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_filteredTasks.Count == 0)
+    {
+        <MudPaper Outlined="true" Elevation="0" Class="pa-10 d-flex flex-column align-center">
+            <MudIcon Icon="@EmptyIcon" Size="Size.Large"
+                     Style="color: var(--mud-palette-text-disabled); font-size: 3rem;" />
+            <MudText Typo="Typo.body1" Class="mt-3"
+                     Style="color: var(--mud-palette-text-secondary);">
+                @EmptyMessage
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Elevation="1">
+            @for (var i = 0; i < _filteredTasks.Count; i++)
+            {
+                var task = _filteredTasks[i];
+                var isLast = i == _filteredTasks.Count - 1;
+
+                <div class="task-row d-flex align-center gap-3 px-3 py-2"
+                     style="@(isLast ? "" : "border-bottom: 1px solid var(--mud-palette-divider);")">
+                    <MudCheckBox T="bool" Value="task.Done"
                                  ValueChanged="@(done => ToggleDone(task, done))"
-                                 Color="Color.Primary" />
-                    <div class="flex-grow-1">
+                                 Color="Color.Primary" Dense="true" />
+
+                    <div class="flex-grow-1" style="min-width: 0;">
                         <MudText Typo="Typo.body1"
-                                 Style="@(task.Done ? "text-decoration: line-through; opacity: 0.55;" : "")">
+                                 Style="@(task.Done
+                                     ? "text-decoration: line-through; color: var(--mud-palette-text-disabled);"
+                                     : "")">
                             @task.Title
                         </MudText>
                         @if (!string.IsNullOrWhiteSpace(task.Notes))
                         {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">@task.Notes</MudText>
-                        }
-                        @if (task.DueUtc.HasValue)
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Tertiary">
-                                Due @task.DueUtc.Value.ToLocalTime().ToString("g")
+                            <MudText Typo="Typo.caption"
+                                     Style="color: var(--mud-palette-text-secondary);">
+                                @task.Notes
                             </MudText>
                         }
                     </div>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+
+                    @if (task.DueUtc.HasValue)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Color="@(task.DueUtc.Value < DateTime.UtcNow && !task.Done ? Color.Warning : Color.Default)"
+                                 Icon="@Icons.Material.Outlined.Schedule">
+                            @task.DueUtc.Value.ToLocalTime().ToString("MMM d")
+                        </MudChip>
+                    }
+
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete"
                                    Size="Size.Small"
-                                   Color="Color.Default"
+                                   Style="color: var(--mud-palette-text-disabled);"
                                    OnClick="@(() => DeleteTask(task))" />
                 </div>
-            </MudListItem>
-        }
-    </MudList>
-}
+            }
+        </MudPaper>
+    }
+</MudStack>
+
+<style>
+    .task-row {
+        transition: background-color 120ms ease;
+    }
+    .task-row:hover {
+        background-color: var(--mud-palette-action-default-hover);
+    }
+</style>
 
 @code {
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
+
+    private enum TaskFilter { Active = 0, Done = 1, All = 2 }
 
     private List<TaskItem> _tasks = [];
     private string _newTitle = string.Empty;
     private bool _loading = true;
     private bool _busy;
     private string? _ownerId;
+    private int _filterIndex;
+
+    private TaskFilter Filter => (TaskFilter)_filterIndex;
+
+    private int ActiveCount => _tasks.Count(t => !t.Done);
+    private int DoneCount => _tasks.Count(t => t.Done);
+
+    private Color AddIconColor =>
+        string.IsNullOrWhiteSpace(_newTitle) ? Color.Default : Color.Primary;
+
+    private List<TaskItem> _filteredTasks => Filter switch
+    {
+        TaskFilter.Active => _tasks.Where(t => !t.Done).ToList(),
+        TaskFilter.Done => _tasks.Where(t => t.Done).ToList(),
+        _ => _tasks
+    };
+
+    private string EmptyIcon => Filter switch
+    {
+        TaskFilter.Done => Icons.Material.Outlined.RadioButtonUnchecked,
+        _ => Icons.Material.Outlined.Inbox
+    };
+
+    private string EmptyMessage => Filter switch
+    {
+        TaskFilter.Active when _tasks.Count > 0 => "All caught up.",
+        TaskFilter.Done => "Nothing completed yet.",
+        _ => "Add your first task above."
+    };
 
     protected override async Task OnInitializedAsync()
     {
         if (AuthState is null) return;
         var state = await AuthState;
         _ownerId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
         await Reload();
     }
 
@@ -99,6 +183,11 @@ else
         _loading = true;
         _tasks = await TaskRepo.GetForOwnerAsync(_ownerId);
         _loading = false;
+    }
+
+    private void OnFilterChange(int index)
+    {
+        _filterIndex = index;
     }
 
     private async Task OnNewTitleKey(KeyboardEventArgs e)
@@ -133,7 +222,8 @@ else
     {
         if (_ownerId is null) return;
         await TaskRepo.SetDoneAsync(task.Id, _ownerId, done);
-        await Reload();
+        task.Done = done;
+        task.CompletedUtc = done ? DateTime.UtcNow : null;
     }
 
     private async Task DeleteTask(TaskItem task)
@@ -141,6 +231,6 @@ else
         if (_ownerId is null) return;
         await TaskRepo.DeleteAsync(task.Id, _ownerId);
         Snackbar.Add($"Deleted \"{task.Title}\"", Severity.Info);
-        await Reload();
+        _tasks.Remove(task);
     }
 }

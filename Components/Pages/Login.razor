@@ -5,32 +5,44 @@
 <PageTitle>Sign in — CheapTasks</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
-    <MudPaper Class="pa-8 d-flex flex-column align-center" Elevation="2">
-        <MudText Typo="Typo.h4" GutterBottom="true">CheapTasks</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6 text-center">
-            Just another tasks/todo app.
-        </MudText>
+    <MudStack Spacing="6" AlignItems="AlignItems.Stretch">
+
+        <MudStack Spacing="2" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Rounded.TaskAlt"
+                     Color="Color.Primary"
+                     Style="font-size: 3.5rem;" />
+            <MudText Typo="Typo.h3" Align="Align.Center">CheapTasks</MudText>
+            <MudText Typo="Typo.body2" Align="Align.Center"
+                     Style="color: var(--mud-palette-text-secondary);">
+                Just another tasks/todo app.
+            </MudText>
+        </MudStack>
 
         @if (!string.IsNullOrEmpty(_error))
         {
-            <MudAlert Severity="Severity.Warning" Class="mb-4" Variant="Variant.Filled" Dense="true">
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Dense="true">
                 @_error
             </MudAlert>
         }
 
-        <MudButton Href="/auth/plex-start"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Size="Size.Large"
-                   FullWidth="true"
-                   StartIcon="@Icons.Material.Filled.Login">
-            Sign in with Plex
-        </MudButton>
+        <MudPaper Elevation="3" Class="pa-6">
+            <MudStack Spacing="3">
+                <MudButton Href="/auth/plex-start"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Rounded.Login">
+                    Sign in with Plex
+                </MudButton>
 
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-6 text-center">
-            Access is limited to members of the Plex server.
-        </MudText>
-    </MudPaper>
+                <MudText Typo="Typo.caption" Align="Align.Center"
+                         Style="color: var(--mud-palette-text-secondary);">
+                    Access is limited to members of the Plex server.
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
 </MudContainer>
 
 @code {
