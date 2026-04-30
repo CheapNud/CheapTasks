@@ -257,11 +257,6 @@
         };
 
         var dialog = await DialogService.ShowAsync<EditTaskDialog>("Edit task", parameters, options);
-        var result = await dialog.Result;
-        if (result is { Canceled: false })
-        {
-            // Task object was mutated in-place by the dialog; nothing to refetch.
-            StateHasChanged();
-        }
+        await dialog.Result;
     }
 }

@@ -1,4 +1,6 @@
+@using System.Diagnostics
 @inject TaskRepo TaskRepo
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <TitleContent>
@@ -63,6 +65,10 @@
     {
         if (string.IsNullOrWhiteSpace(_title)) return;
 
+        var originalTitle = Task.Title;
+        var originalNotes = Task.Notes;
+        var originalDueUtc = Task.DueUtc;
+
         _busy = true;
         try
         {
@@ -73,7 +79,16 @@
                 : null;
 
             await TaskRepo.UpdateAsync(Task);
+            Snackbar.Add($"Saved \"{Task.Title}\"", Severity.Success);
             MudDialog.Close(DialogResult.Ok(Task));
+        }
+        catch (Exception ex)
+        {
+            Task.Title = originalTitle;
+            Task.Notes = originalNotes;
+            Task.DueUtc = originalDueUtc;
+            Debug.WriteLine($"EditTaskDialog.Save failed: {ex}");
+            Snackbar.Add("Could not save changes. Please try again.", Severity.Error);
         }
         finally
         {
