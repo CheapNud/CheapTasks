@@ -16,6 +16,17 @@ public class TaskRepo(IDbContextFactory<CheapTasksDbContext> dbFactory)
             .ToListAsync(ct);
     }
 
+    public async Task<List<string>> GetDistinctLocationsAsync(string ownerId, CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        return await db.Tasks
+            .Where(t => t.OwnerId == ownerId && t.Location != null && t.Location != "")
+            .Select(t => t.Location!)
+            .Distinct()
+            .OrderBy(l => l)
+            .ToListAsync(ct);
+    }
+
     public async Task<TaskItem?> GetAsync(int id, string ownerId, CancellationToken ct = default)
     {
         await using var db = await dbFactory.CreateDbContextAsync(ct);

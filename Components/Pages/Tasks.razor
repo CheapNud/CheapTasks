@@ -55,6 +55,23 @@
         </MudTabs>
     }
 
+    @if (_knownLocations.Count > 0)
+    {
+        <MudChipSet T="string"
+                    SelectedValue="_locationFilter"
+                    SelectedValueChanged="OnLocationFilterChange"
+                    SelectionMode="SelectionMode.SingleSelection"
+                    CheckMark="false">
+            <MudChip Text="All rooms" Value="@((string?)null)"
+                     Variant="Variant.Text" Color="Color.Default" Size="Size.Small" />
+            @foreach (var loc in _knownLocations)
+            {
+                <MudChip Text="@loc" Value="@loc"
+                         Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+            }
+        </MudChipSet>
+    }
+
     @if (_loading)
     {
         <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
@@ -100,6 +117,15 @@
                         }
                     </div>
 
+                    @if (!string.IsNullOrWhiteSpace(task.Location))
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                                 Color="Color.Default"
+                                 Icon="@Icons.Material.Outlined.Place">
+                            @task.Location
+                        </MudChip>
+                    }
+
                     @if (task.DueUtc.HasValue)
                     {
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
@@ -143,11 +169,13 @@
     private enum TaskFilter { Active = 0, Done = 1, All = 2 }
 
     private List<TaskItem> _tasks = [];
+    private List<string> _knownLocations = [];
     private string _newTitle = string.Empty;
     private bool _loading = true;
     private bool _busy;
     private string? _ownerId;
     private int _filterIndex;
+    private string? _locationFilter;
 
     private TaskFilter Filter => (TaskFilter)_filterIndex;
 
@@ -157,12 +185,21 @@
     private Color AddIconColor =>
         string.IsNullOrWhiteSpace(_newTitle) ? Color.Default : Color.Primary;
 
-    private List<TaskItem> _filteredTasks => Filter switch
+    private List<TaskItem> _filteredTasks
     {
-        TaskFilter.Active => _tasks.Where(t => !t.Done).ToList(),
-        TaskFilter.Done => _tasks.Where(t => t.Done).ToList(),
-        _ => _tasks
-    };
+        get
+        {
+            IEnumerable<TaskItem> q = Filter switch
+            {
+                TaskFilter.Active => _tasks.Where(t => !t.Done),
+                TaskFilter.Done => _tasks.Where(t => t.Done),
+                _ => _tasks
+            };
+            if (!string.IsNullOrEmpty(_locationFilter))
+                q = q.Where(t => t.Location == _locationFilter);
+            return q.ToList();
+        }
+    }
 
     private string EmptyIcon => Filter switch
     {
@@ -190,12 +227,26 @@
         if (_ownerId is null) return;
         _loading = true;
         _tasks = await TaskRepo.GetForOwnerAsync(_ownerId);
+        await RefreshKnownLocations();
         _loading = false;
+    }
+
+    private async Task RefreshKnownLocations()
+    {
+        if (_ownerId is null) return;
+        _knownLocations = await TaskRepo.GetDistinctLocationsAsync(_ownerId);
+        if (_locationFilter is not null && !_knownLocations.Contains(_locationFilter))
+            _locationFilter = null;
     }
 
     private void OnFilterChange(int index)
     {
         _filterIndex = index;
+    }
+
+    private void OnLocationFilterChange(string? location)
+    {
+        _locationFilter = location;
     }
 
     private async Task OnNewTitleKey(KeyboardEventArgs e)
@@ -246,7 +297,8 @@
     {
         var parameters = new DialogParameters<EditTaskDialog>
         {
-            { x => x.Task, task }
+            { x => x.Item, task },
+            { x => x.KnownLocations, _knownLocations }
         };
         var options = new DialogOptions
         {
@@ -260,6 +312,7 @@
         var result = await dialog.Result;
         if (result is null || result.Canceled) return;
 
+        await RefreshKnownLocations();
         StateHasChanged();
     }
 }
