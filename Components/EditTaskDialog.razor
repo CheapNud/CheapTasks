@@ -11,13 +11,27 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="3" Class="pt-2" Style="min-width: 320px;">
+            <MudSwitch T="bool"
+                       Value="@(_kind == TaskKind.Decision)"
+                       ValueChanged="OnKindToggle"
+                       Label="Treat as a decision / research item"
+                       Color="Color.Primary" />
             <MudTextField @bind-Value="_title"
-                          Label="Title"
+                          Label="@(_kind == TaskKind.Decision ? "Question" : "Title")"
                           Variant="Variant.Outlined"
                           Required="true"
                           Immediate="true"
                           MaxLength="200"
                           AutoFocus="true" />
+            @if (_kind == TaskKind.Decision)
+            {
+                <MudTextField @bind-Value="_options"
+                              Label="Options"
+                              Variant="Variant.Outlined"
+                              Lines="4"
+                              MaxLength="1000"
+                              HelperText="One per line" />
+            }
             <MudTextField @bind-Value="_notes"
                           Label="Notes"
                           Variant="Variant.Outlined"
@@ -51,6 +65,8 @@
 
     private string _title = string.Empty;
     private string? _notes;
+    private string? _options;
+    private TaskKind _kind;
     private DateTime? _dueDate;
     private bool _busy;
 
@@ -58,7 +74,14 @@
     {
         _title = Task.Title;
         _notes = Task.Notes;
+        _options = Task.Options;
+        _kind = Task.Kind;
         _dueDate = Task.DueUtc?.ToLocalTime();
+    }
+
+    private void OnKindToggle(bool isDecision)
+    {
+        _kind = isDecision ? TaskKind.Decision : TaskKind.Todo;
     }
 
     private async Task Save()
@@ -67,6 +90,8 @@
 
         var originalTitle = Task.Title;
         var originalNotes = Task.Notes;
+        var originalOptions = Task.Options;
+        var originalKind = Task.Kind;
         var originalDueUtc = Task.DueUtc;
 
         _busy = true;
@@ -74,6 +99,10 @@
         {
             Task.Title = _title.Trim();
             Task.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
+            Task.Kind = _kind;
+            Task.Options = _kind == TaskKind.Decision && !string.IsNullOrWhiteSpace(_options)
+                ? _options.Trim()
+                : null;
             Task.DueUtc = _dueDate.HasValue
                 ? DateTime.SpecifyKind(_dueDate.Value, DateTimeKind.Local).ToUniversalTime()
                 : null;
@@ -86,6 +115,8 @@
         {
             Task.Title = originalTitle;
             Task.Notes = originalNotes;
+            Task.Options = originalOptions;
+            Task.Kind = originalKind;
             Task.DueUtc = originalDueUtc;
             Debug.WriteLine($"EditTaskDialog.Save failed: {ex}");
             Snackbar.Add("Could not save changes. Please try again.", Severity.Error);
