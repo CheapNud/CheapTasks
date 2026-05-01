@@ -1,6 +1,6 @@
 <!--
   TODO.md — CheapTasks project work tracker
-  Last updated: 2026-04-18c
+  Last updated: 2026-05-01a
 
   RULES FOR AI AGENTS:
   - Update the "Last updated" date above whenever you modify this file
@@ -32,6 +32,13 @@ _Nothing blocking._
 
 ## Planned
 
+- [ ] (2026-05-01) Pin/star priority field on tasks — surface the few items actually being worked on above the backlog [plan]
+  - Live data: 29/30 active, 1 done in 12 days; no current signal for "what's next"
+- [ ] (2026-05-01) Rooms/Locations field (chip + filter) with autocomplete from existing values [plan]
+  - Live data: heavy clustering on "boven", "berging", "bureau", "stoppenkast", "hal", "dakgoot"
+  - User already disambiguated by hand: "Berging opruimen" (Apr 18) → "Berging boven opruimen" (Apr 22)
+- [ ] (2026-05-01) Decision/research item type for `?`-style titles — question + options list + "decided" close-state [plan]
+  - Live data: 5/30 titles end in "?" with embedded options (S/PDIF, RTX3070, HDMI fiber, multimeter, side spots)
 - [ ] (2026-04-18) End-to-end sign-in test against live deployment (Plex pin → callback → land on /tasks) [user]
 - [ ] (2026-04-18) Confirm `wud.watch=true` registered in WUD on Megaton (http://192.168.1.12:3000) [plan]
 - [ ] (2026-04-18) Phase 2 (Identity bolt-on) blocked on CheapHelpers fix — make `ExternalUserProvisioner` generic over `TUser : CheapUser` and pull `UserManager<TUser>` / `SignInManager<TUser>` instead of the abstract base [plan]
@@ -39,8 +46,18 @@ _Nothing blocking._
 
 ## Future
 
+- [ ] (2026-05-01) Compound-title splitter — detect `+` and "of op zn minst" → offer one-click sub-task split [plan]
+  - Live examples: "Licht boven fixen + ventilator", "Kut vogel nest weg zien te krijgen + strips zetten", "die 2 side spots ophangen of op zn minst de draad clippen"
+- [ ] (2026-05-01) Linked / follow-up parent-child relation between tasks [plan]
+  - Live example: post-"Beamer ophangen" AV chain (S/PDIF, HDMI fiber, side spots) currently floating as siblings
+- [ ] (2026-05-01) Auto-suggest moving parenthetical content from Title → Notes when title > ~60 chars or contains `(` [plan]
+  - Live data: 0/30 use Notes; titles up to 113 chars with embedded prose ("Voltiq work (build that edge device, everything needed has arrived)")
+- [ ] (2026-05-01) Stale chip + weekly "still relevant?" sweep for items > 14 days old [plan]
+  - Live data: 17/30 active items would qualify today
 - [ ] (2026-04-17) Tags / labels on tasks [plan]
+  - Likely superseded by the Rooms/Locations item above; reconsider once Locations ships
 - [ ] (2026-04-17) Due-date reminders / notifications [plan]
+  - Live data argues against: 0/30 prod items have a due date set — defer until field shows organic adoption
 - [ ] (2026-04-17) Public share link for a single task or list (read-only) [plan]
 - [ ] (2026-04-17) Mobile layout pass [plan]
 - [ ] (2026-04-17) Health + metrics endpoints (gated by `X-Api-Key`, like CheapManga) [plan]
