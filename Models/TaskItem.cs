@@ -17,6 +17,9 @@ public class TaskItem
     [MaxLength(2000)]
     public string? Notes { get; set; }
 
+    [MaxLength(60)]
+    public string? Location { get; set; }
+
     public bool Done { get; set; }
 
     public bool IsPinned { get; set; }

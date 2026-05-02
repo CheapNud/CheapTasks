@@ -24,6 +24,26 @@
                           Lines="3"
                           MaxLength="2000"
                           HelperText="Optional details" />
+            <MudTextField @bind-Value="_location"
+                          Label="Room / location"
+                          Variant="Variant.Outlined"
+                          Clearable="true"
+                          MaxLength="60"
+                          HelperText="Optional — type a new one or pick from existing" />
+            @if (KnownLocations.Count > 0)
+            {
+                <MudChipSet T="string"
+                            SelectedValue="_location"
+                            SelectedValueChanged="@(v => _location = v)"
+                            SelectionMode="SelectionMode.SingleSelection"
+                            CheckMark="false">
+                    @foreach (var loc in KnownLocations)
+                    {
+                        <MudChip Text="@loc" Value="@loc"
+                                 Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                    }
+                </MudChipSet>
+            }
             <MudDatePicker @bind-Date="_dueDate"
                            Label="Due date"
                            Variant="Variant.Outlined"
@@ -47,46 +67,54 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter, EditorRequired]
-    public TaskItem Task { get; set; } = default!;
+    public TaskItem Item { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<string> KnownLocations { get; set; } = [];
 
     private string _title = string.Empty;
     private string? _notes;
+    private string? _location;
     private DateTime? _dueDate;
     private bool _busy;
 
     protected override void OnInitialized()
     {
-        _title = Task.Title;
-        _notes = Task.Notes;
-        _dueDate = Task.DueUtc?.ToLocalTime();
+        _title = Item.Title;
+        _notes = Item.Notes;
+        _location = Item.Location;
+        _dueDate = Item.DueUtc?.ToLocalTime();
     }
 
     private async Task Save()
     {
         if (string.IsNullOrWhiteSpace(_title)) return;
 
-        var originalTitle = Task.Title;
-        var originalNotes = Task.Notes;
-        var originalDueUtc = Task.DueUtc;
+        var originalTitle = Item.Title;
+        var originalNotes = Item.Notes;
+        var originalLocation = Item.Location;
+        var originalDueUtc = Item.DueUtc;
 
         _busy = true;
         try
         {
-            Task.Title = _title.Trim();
-            Task.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
-            Task.DueUtc = _dueDate.HasValue
+            Item.Title = _title.Trim();
+            Item.Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim();
+            Item.Location = string.IsNullOrWhiteSpace(_location) ? null : _location.Trim();
+            Item.DueUtc = _dueDate.HasValue
                 ? DateTime.SpecifyKind(_dueDate.Value, DateTimeKind.Local).ToUniversalTime()
                 : null;
 
-            await TaskRepo.UpdateAsync(Task);
-            Snackbar.Add($"Saved \"{Task.Title}\"", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(Task));
+            await TaskRepo.UpdateAsync(Item);
+            Snackbar.Add($"Saved \"{Item.Title}\"", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(Item));
         }
         catch (Exception ex)
         {
-            Task.Title = originalTitle;
-            Task.Notes = originalNotes;
-            Task.DueUtc = originalDueUtc;
+            Item.Title = originalTitle;
+            Item.Notes = originalNotes;
+            Item.Location = originalLocation;
+            Item.DueUtc = originalDueUtc;
             Debug.WriteLine($"EditTaskDialog.Save failed: {ex}");
             Snackbar.Add("Could not save changes. Please try again.", Severity.Error);
         }
