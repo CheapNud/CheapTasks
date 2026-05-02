@@ -77,12 +77,12 @@
         _dueDate = Item.DueUtc?.ToLocalTime();
     }
 
-    private Task<IEnumerable<string>> SearchLocations(string value, CancellationToken ct)
+    private async Task<IEnumerable<string>> SearchLocations(string value, CancellationToken ct)
     {
-        if (KnownLocations.Count == 0) return Task.FromResult(Enumerable.Empty<string>());
-        if (string.IsNullOrWhiteSpace(value)) return Task.FromResult<IEnumerable<string>>(KnownLocations);
-        return Task.FromResult(KnownLocations.Where(l =>
-            l.Contains(value, StringComparison.OrdinalIgnoreCase)));
+        await Task.CompletedTask;
+        if (KnownLocations.Count == 0) return [];
+        if (string.IsNullOrWhiteSpace(value)) return KnownLocations;
+        return KnownLocations.Where(l => l.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task Save()
