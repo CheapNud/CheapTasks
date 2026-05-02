@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CheapTasks.Migrations
 {
     [DbContext(typeof(CheapTasksDbContext))]
-    [Migration("20260502192405_AddDecisionType")]
+    [Migration("20260502193140_AddDecisionType")]
     partial class AddDecisionType
     {
         /// <inheritdoc />
