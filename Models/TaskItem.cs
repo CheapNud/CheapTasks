@@ -2,6 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CheapTasks.Models;
 
+public enum TaskKind
+{
+    Todo = 0,
+    Decision = 1,
+}
+
 public class TaskItem
 {
     public int Id { get; set; }
@@ -16,6 +22,11 @@ public class TaskItem
 
     [MaxLength(2000)]
     public string? Notes { get; set; }
+
+    public TaskKind Kind { get; set; }
+
+    [MaxLength(1000)]
+    public string? Options { get; set; }
 
     public bool Done { get; set; }
 

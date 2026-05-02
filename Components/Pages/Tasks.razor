@@ -85,12 +85,29 @@
                                  Color="Color.Primary" Dense="true" />
 
                     <div class="flex-grow-1" style="min-width: 0;">
-                        <MudText Typo="Typo.body1"
-                                 Style="@(task.Done
-                                     ? "text-decoration: line-through; color: var(--mud-palette-text-disabled);"
-                                     : "")">
-                            @task.Title
-                        </MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            @if (task.Kind == TaskKind.Decision)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.HelpOutline"
+                                         Size="Size.Small"
+                                         Color="@(task.Done ? Color.Default : Color.Info)" />
+                            }
+                            <MudText Typo="Typo.body1"
+                                     Style="@(task.Done
+                                         ? "text-decoration: line-through; color: var(--mud-palette-text-disabled);"
+                                         : "")">
+                                @task.Title
+                            </MudText>
+                        </MudStack>
+                        @if (task.Kind == TaskKind.Decision && !string.IsNullOrWhiteSpace(task.Options))
+                        {
+                            <ul style="margin: 4px 0 0 24px; padding: 0; color: var(--mud-palette-text-secondary); font-size: 0.85rem;">
+                                @foreach (var opt in DecisionOptions(task.Options))
+                                {
+                                    <li>@opt</li>
+                                }
+                            </ul>
+                        }
                         @if (!string.IsNullOrWhiteSpace(task.Notes))
                         {
                             <MudText Typo="Typo.caption"
@@ -183,6 +200,11 @@
         TaskFilter.Done => "Nothing completed yet.",
         _ => "Add your first task above."
     };
+
+    private static IEnumerable<string> DecisionOptions(string? raw) =>
+        string.IsNullOrWhiteSpace(raw)
+            ? []
+            : raw.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     protected override async Task OnInitializedAsync()
     {
