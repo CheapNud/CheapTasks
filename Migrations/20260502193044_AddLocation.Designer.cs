@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CheapTasks.Migrations
 {
     [DbContext(typeof(CheapTasksDbContext))]
-    [Migration("20260502192315_AddLocation")]
+    [Migration("20260502193044_AddLocation")]
     partial class AddLocation
     {
         /// <inheritdoc />

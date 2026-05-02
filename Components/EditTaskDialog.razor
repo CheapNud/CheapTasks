@@ -24,17 +24,26 @@
                           Lines="3"
                           MaxLength="2000"
                           HelperText="Optional details" />
-            <MudAutocomplete T="string"
-                             @bind-Value="_location"
-                             Label="Room / location"
-                             Variant="Variant.Outlined"
-                             SearchFunc="SearchLocations"
-                             CoerceValue="true"
-                             CoerceText="false"
-                             ResetValueOnEmptyText="true"
-                             Clearable="true"
-                             MaxLength="60"
-                             HelperText="Optional — type a new one or pick from existing" />
+            <MudTextField @bind-Value="_location"
+                          Label="Room / location"
+                          Variant="Variant.Outlined"
+                          Clearable="true"
+                          MaxLength="60"
+                          HelperText="Optional — type a new one or pick from existing" />
+            @if (KnownLocations.Count > 0)
+            {
+                <MudChipSet T="string"
+                            SelectedValue="_location"
+                            SelectedValueChanged="@(v => _location = v)"
+                            SelectionMode="SelectionMode.SingleSelection"
+                            CheckMark="false">
+                    @foreach (var loc in KnownLocations)
+                    {
+                        <MudChip Text="@loc" Value="@loc"
+                                 Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                    }
+                </MudChipSet>
+            }
             <MudDatePicker @bind-Date="_dueDate"
                            Label="Due date"
                            Variant="Variant.Outlined"
@@ -75,14 +84,6 @@
         _notes = Item.Notes;
         _location = Item.Location;
         _dueDate = Item.DueUtc?.ToLocalTime();
-    }
-
-    private async Task<IEnumerable<string>> SearchLocations(string value, CancellationToken ct)
-    {
-        await Task.CompletedTask;
-        if (KnownLocations.Count == 0) return [];
-        if (string.IsNullOrWhiteSpace(value)) return KnownLocations;
-        return KnownLocations.Where(l => l.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task Save()
