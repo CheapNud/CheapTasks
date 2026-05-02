@@ -19,6 +19,8 @@ public class TaskItem
 
     public bool Done { get; set; }
 
+    public bool IsPinned { get; set; }
+
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
     public DateTime? DueUtc { get; set; }
