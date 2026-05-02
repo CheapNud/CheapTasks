@@ -5,35 +5,33 @@
 namespace CheapTasks.Migrations
 {
     /// <inheritdoc />
-    public partial class AddDecisionType : Migration
+    public partial class AddIsPinned : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "Kind",
+            migrationBuilder.AddColumn<bool>(
+                name: "IsPinned",
                 table: "Tasks",
-                type: "integer",
+                type: "boolean",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: false);
 
-            migrationBuilder.AddColumn<string>(
-                name: "Options",
+            migrationBuilder.CreateIndex(
+                name: "IX_Tasks_OwnerId_IsPinned",
                 table: "Tasks",
-                type: "character varying(1000)",
-                maxLength: 1000,
-                nullable: true);
+                columns: new[] { "OwnerId", "IsPinned" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Kind",
+            migrationBuilder.DropIndex(
+                name: "IX_Tasks_OwnerId_IsPinned",
                 table: "Tasks");
 
             migrationBuilder.DropColumn(
-                name: "Options",
+                name: "IsPinned",
                 table: "Tasks");
         }
     }

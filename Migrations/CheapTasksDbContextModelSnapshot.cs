@@ -42,6 +42,9 @@ namespace CheapTasks.Migrations
                     b.Property<DateTime?>("DueUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
@@ -68,6 +71,8 @@ namespace CheapTasks.Migrations
                     b.HasIndex("OwnerId");
 
                     b.HasIndex("OwnerId", "Done");
+
+                    b.HasIndex("OwnerId", "IsPinned");
 
                     b.ToTable("Tasks");
                 });

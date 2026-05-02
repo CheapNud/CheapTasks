@@ -12,6 +12,7 @@ public class TaskRepo(IDbContextFactory<CheapTasksDbContext> dbFactory)
         return await db.Tasks
             .Where(t => t.OwnerId == ownerId)
             .OrderBy(t => t.Done)
+            .ThenByDescending(t => t.IsPinned)
             .ThenByDescending(t => t.CreatedUtc)
             .ToListAsync(ct);
     }
@@ -45,6 +46,17 @@ public class TaskRepo(IDbContextFactory<CheapTasksDbContext> dbFactory)
 
         task.Done = done;
         task.CompletedUtc = done ? DateTime.UtcNow : null;
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> SetPinnedAsync(int id, string ownerId, bool pinned, CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var task = await db.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.OwnerId == ownerId, ct);
+        if (task is null) return false;
+
+        task.IsPinned = pinned;
         await db.SaveChangesAsync(ct);
         return true;
     }

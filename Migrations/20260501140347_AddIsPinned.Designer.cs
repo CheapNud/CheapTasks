@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CheapTasks.Migrations
 {
     [DbContext(typeof(CheapTasksDbContext))]
-    [Migration("20260501141042_AddDecisionType")]
-    partial class AddDecisionType
+    [Migration("20260501140347_AddIsPinned")]
+    partial class AddIsPinned
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,16 +45,12 @@ namespace CheapTasks.Migrations
                     b.Property<DateTime?>("DueUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer");
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("Options")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("OwnerId")
                         .IsRequired()
@@ -71,6 +67,8 @@ namespace CheapTasks.Migrations
                     b.HasIndex("OwnerId");
 
                     b.HasIndex("OwnerId", "Done");
+
+                    b.HasIndex("OwnerId", "IsPinned");
 
                     b.ToTable("Tasks");
                 });
