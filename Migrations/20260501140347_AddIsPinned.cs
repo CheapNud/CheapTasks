@@ -5,33 +5,33 @@
 namespace CheapTasks.Migrations
 {
     /// <inheritdoc />
-    public partial class AddLocation : Migration
+    public partial class AddIsPinned : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Location",
+            migrationBuilder.AddColumn<bool>(
+                name: "IsPinned",
                 table: "Tasks",
-                type: "character varying(60)",
-                maxLength: 60,
-                nullable: true);
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tasks_OwnerId_Location",
+                name: "IX_Tasks_OwnerId_IsPinned",
                 table: "Tasks",
-                columns: new[] { "OwnerId", "Location" });
+                columns: new[] { "OwnerId", "IsPinned" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Tasks_OwnerId_Location",
+                name: "IX_Tasks_OwnerId_IsPinned",
                 table: "Tasks");
 
             migrationBuilder.DropColumn(
-                name: "Location",
+                name: "IsPinned",
                 table: "Tasks");
         }
     }

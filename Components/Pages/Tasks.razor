@@ -135,6 +135,13 @@
                         </MudChip>
                     }
 
+                    <MudTooltip Text="@(task.IsPinned ? "Unpin" : "Pin")">
+                        <MudIconButton Icon="@(task.IsPinned ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
+                                       Size="Size.Small"
+                                       Color="@(task.IsPinned ? Color.Primary : Color.Default)"
+                                       Style="@(task.IsPinned ? "" : "color: var(--mud-palette-text-disabled);")"
+                                       OnClick="@(() => TogglePin(task))" />
+                    </MudTooltip>
                     <MudTooltip Text="Edit">
                         <MudIconButton Icon="@Icons.Material.Outlined.Edit"
                                        Size="Size.Small"
@@ -283,6 +290,15 @@
         await TaskRepo.SetDoneAsync(task.Id, _ownerId, done);
         task.Done = done;
         task.CompletedUtc = done ? DateTime.UtcNow : null;
+    }
+
+    private async Task TogglePin(TaskItem task)
+    {
+        if (_ownerId is null) return;
+        var pinned = !task.IsPinned;
+        await TaskRepo.SetPinnedAsync(task.Id, _ownerId, pinned);
+        task.IsPinned = pinned;
+        _tasks = [.. _tasks.OrderBy(t => t.Done).ThenByDescending(t => t.IsPinned).ThenByDescending(t => t.CreatedUtc)];
     }
 
     private async Task DeleteTask(TaskItem task)

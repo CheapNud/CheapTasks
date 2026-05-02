@@ -15,6 +15,7 @@ public class CheapTasksDbContext(DbContextOptions<CheapTasksDbContext> options) 
         {
             e.HasIndex(t => t.OwnerId);
             e.HasIndex(t => new { t.OwnerId, t.Done });
+            e.HasIndex(t => new { t.OwnerId, t.IsPinned });
             e.HasIndex(t => new { t.OwnerId, t.Location });
         });
     }
